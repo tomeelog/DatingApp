@@ -13,32 +13,31 @@ namespace DatingApp.API.Data
             _context = context;
 
         }
-        public async Task<User> Login(string username, string password)
+         public async Task<User> Login(string username, string password)
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == username);
-            if(user == null)
+
+            if (user == null)
                 return null;
             
-            if(!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
                 return null;
 
             return user;
-            
         }
 
         private bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
         {
-            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+             using(var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
             {
-            var comuteddHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-            for(int i = 0; i < comuteddHash.Length; i++)
-            {
-                if(comuteddHash[i] != passwordHash[i]) return false;
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                for(int i=0; i<computedHash.Length; i++)
+                {
+                    if(computedHash[i] != passwordHash[i]) {return false;}
+                }
+                return true;
             }
-            }
-            return true;
         }
-
         public async Task<User> Register(User username, string password)
         {
             byte[] passwordHash, passwordSalt;
